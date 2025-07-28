@@ -114,7 +114,7 @@ body {
 }
 
 .Btn-custom {
-  width: 400px;
+  width: 200%;
   height: 100px;
   font-size: 30px;
   border-color: gold;
@@ -206,18 +206,19 @@ body {
 }
 
 .info-board {
-  width: 100%;
-  max-width: 600px; /* Optional: Limit the width */
+  width: 60%;
+ 
   background-color: #a1905a;
   color: #f0f0f0;
   margin: 20px auto;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1.6;
   box-sizing: border-box;
-  padding-bottom: 30px;
+  height: fit-content;
+  
 }
 
 .info-board-black {
@@ -240,7 +241,7 @@ body {
 }
 
 .info-board h4 {
-  font-size: 1.5rem;
+  font-size: 1em;
   margin-bottom: 8px;
   color: #ffd700; 
   border-bottom: 2px solid #444;
@@ -268,7 +269,7 @@ body {
 .bottom-buttons {
   display: flex;
   position: fixed !important;
-  bottom: 15px !important;
+  bottom: 50px !important;
   justify-content: space-between;
   gap: 10px; /* optional space between */
   padding: 10px;
@@ -289,7 +290,7 @@ body {
 }
 
 /* Responsive: stack vertically on small screen */
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
   .Btn-custom {
     width: 200% !important;
     height: 100px;
@@ -298,8 +299,8 @@ body {
   }
   .info-board {
     width: 100%;
-    height: 400px;
-    font-size: 3rem;
+    height: 190px;
+    font-size: 6rem;
     text-align: center;
   }
 
