@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Board</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   <script src="/socket.io/socket.io.js"></script>
+
+</head>
+<body>
+  <!-- Top Buttons -->
+   <audio id="clickSound" src="/mixkit-sick-man-sneeze-2213.wav" preload="auto"></audio>
+   
+  <div class="top-buttons">
+    <button class="Btn-custom" id="left-btn">Join As Player White</button>
+    <div class="info-board none">
+    <h4>Info</h4>
+    <p>Current Player: White</p>
+  </div>
+    <button class="Btn-custom" id="right-btn">Join As Player Black</button>
+     
+  </div>
+  
+
+  <div id="countdownModal" class="none">
+    <div class="center-content">
+      <span>Make it 16</span>
+      <span id="countdownText">10</span>
+    </div>
+  </div>
+  
+  <div class="board" id="board"></div>
+ 
+
+   <div class="bottom-buttons none">
+      <div class="bottom-info-board">
+        <div class="stone-display white">1</div>
+        <h3>x5</h3><div>
+          <button class="Btn-custom2" onclick="chooseSomething(1)">choose</button></div>
+      </div>
+      <div class="bottom-info-board">
+        <div class="stone-display white">2</div>
+        <h3>x5</h3>
+        <div><button class="Btn-custom2" onclick="chooseSomething(2)">choose</button></div>
+      </div>
+      <div class="bottom-info-board">
+        <div class="stone-display white">3</div>
+        <h3>x5</h3>
+        <div><button class="Btn-custom2" onclick="chooseSomething(3)">choose</button></div>
+      </div>
+      <div class="bottom-info-board">
+        <div class="stone-display white">4</div>
+        <h3>x5</h3><div><button class="Btn-custom2" onclick="chooseSomething(4)">choose</button></div>
+      </div>
+      <div class="bottom-info-board">
+        <div class="stone-display white">5</div>
+        <h3>x5</h3><div><button class="Btn-custom2" onclick="chooseSomething(5)">choose</button></div>
+      </div>
+</div>
+
+</body>
+</html>
+
+<script>
+  //GLOBAL
+  let listenersEnabled = true;
+  let which_cell_that_i_click = null;
+</script>
+
+<script>
+  board_state = <%-JSON.stringify(state) %>;
+  global_player = <%-JSON.stringify(global_player) %>
+
+  function init_board(grid){
+    const board = document.getElementById("board");
+    
+    for (let i = 0; i < (board_state.state.length); i++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.dataset.id = i;
+      cell.addEventListener("click", () => {
+        if (cell.querySelector(".stone")) return;
+        if (!listenersEnabled) return;
+        const cellId = cell.dataset.id;
+        
+        which_cell_that_i_click = cellId
+        const prevSelected = document.querySelector(".cell.selected");
+        if (prevSelected) {
+          prevSelected.classList.remove("selected");
+        }
+        cell.classList.add("selected");
+        
+      });
+      if (board_state.state[i] != 0){
+        let type = board_state.state[i][0]
+        let value = board_state.state[i][1]
+        const stone = document.createElement("div");
+        if (type == "b"){
+          stone.classList.add("stone", "black");
+          stone.textContent = value;
+        } else if (type == "w"){
+          stone.classList.add("stone", "white");
+          stone.textContent = value;
+        }
+        
+        cell.appendChild(stone);
+      }
+        board.appendChild(cell);
+      
+    }
+  }
+  function update_board(cell,type,value){
+    const targetCell = document.querySelector(`.cell[data-id="${cell}"]`);
+
+    if (targetCell) {
+      const stone_test = targetCell.querySelector('.stone'); 
+      if (stone_test) {
+        targetCell.removeChild(stone_test);  // remove the .stone div from .cell
+      }
+      const stone = document.createElement("div");
+      let color = "white"
+      if (type == 0){
+        color = "white"
+      } else if (type == 1){
+        color = "black"
+      }
+      stone.classList.add("stone",color);
+      stone.textContent = value;
+      targetCell.appendChild(stone);
+    }
+  }
+  function randomHash(length = 16) {
+    // Generate `length` bytes, then convert to hex string
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+    
+  </script>
+
+  <script>
+    const socket = io(); //connect
+    function chooseSomething(id){
+        let cell = which_cell_that_i_click
+        let check_id = sessionStorage.getItem('userid');
+
+        if (cell == null) return;
+        if (board_state.state[cell] != 0) return;
+        if (check_id == global_player.player1){
+          if (board_state.player1_stone[id-1] <= 0){
+            return // tidak valid
+          }
+        } else if (check_id == global_player.player2){
+          if (board_state.player2_stone[id-1] <= 0){
+            return // tidak valid
+          }
+        } 
+        let data = {
+          whoami : check_id,
+          move : id,
+          cell: cell
+        }
+        
+        socket.emit("my_turn",data)
+    }
+    $(document).ready(function () {
+
+      grid_count = 15
+      document.documentElement.style.setProperty('--grid-count', grid_count);
+      document.documentElement.style.setProperty('--cell-size', `60px`);
+      
+      init_board(grid_count)
+
+      let check_id = sessionStorage.getItem('userid');
+
+      if (board_state.has_start == true){
+        if (check_id == null || (check_id !=global_player.player1 && check_id != global_player.player2)){
+          //you are spectator
+          console.log("Spec")
+          let elemen1 = document.querySelector('.bottom-buttons');
+          elemen1.classList.add('none');
+          document.getElementById("left-btn").style.display = "none";       
+          document.getElementById("right-btn").style.display = "none";
+          aa = document.querySelector('.top-buttons .info-board');
+          aa.classList.remove('none');
+        } else {
+          //you are player that reload
+          const abc = document.querySelector('.top-buttons .info-board');
+          console.log("non spec")
+          let crplyrtxt = abc.querySelector('p');
+          let elemen2 = document.querySelector('.bottom-buttons');
+          elemen2.classList.remove('none');
+          document.getElementById("left-btn").style.display = "none";       
+          document.getElementById("right-btn").style.display = "none";
+          if (board_state.whos_turn == global_player.player1){
+            crplyrtxt.textContent = 'Current Player: White';
+          } else if (board_state.whos_turn == global_player.player2){
+            crplyrtxt.textContent = 'Current Player: Black';
+          }
+          abc.classList.remove('none');
+        }
+      }
+
+      socket.on('broadcast_player', (data) => {
+       
+        global_player = data.global
+        help = `player ${data.data}`
+        if (data.data == 1){
+          document.getElementById('left-btn').textContent = 'Player 1 Ready';
+           document.getElementById('left-btn').classList.add('booked');
+        } else if (data.data == 2){
+          document.getElementById('right-btn').textContent = 'Player 2 Ready';
+          document.getElementById('right-btn').classList.add('booked');
+        }     
+      });
+
+      socket.on('game_countdown', (data) => {
+          listenersEnabled = false
+          
+          document.getElementById("left-btn").style.display = "none";       
+          document.getElementById("right-btn").style.display = "none";
+           let count = 10;
+          const countdownText = document.getElementById('countdownText');
+          const modal = document.getElementById('countdownModal');
+          
+          modal.classList.remove('none');
+          const interval = setInterval(() => {
+            count--;
+            if (count > 0) {
+              countdownText.textContent = count;
+            } else {
+              clearInterval(interval);
+              modal.classList.add('none'); // Hide modal after countdown
+              const infotop = document.querySelector('.top-buttons .info-board');
+              infotop.classList.remove('none');
+              const displays = document.querySelectorAll('.stone-display');   
+              let my_id = sessionStorage.getItem('userid');
+              if (my_id == global_player.player1){
+                displays.forEach(display => {
+                  display.classList.remove('white');
+                  display.classList.remove('black');
+                  display.classList.add('white');
+              });
+              } else if (my_id == global_player.player2){
+                displays.forEach(display => {
+                  display.classList.remove('white');
+                  display.classList.remove('black');
+                  display.classList.add('black');
+              });
+              }
+              const infoBot = document.querySelector('.bottom-buttons');
+              infoBot.classList.remove('none');
+              if (my_id == global_player.player1 || my_id == global_player.player2){
+                socket.emit('game_start',my_id);
+              }
+              listenersEnabled = true;
+              
+
+            }
+          }, 1000);
+      });
+
+       socket.on('update_move', (info) => {
+          board_state = info.master
+          update_board(info.update.cell,info.update.type,info.update.value)
+          // Play Sound
+          const sound = document.getElementById('clickSound');
+          sound.currentTime = 0; // rewind if already played
+          sound.play();
+          // update info
+          let my_id = sessionStorage.getItem('userid');
+          if (info.winner == "white"){
+            socket.emit('restart', null);
+            setTimeout(() => {
+              // your code here runs after 1 second
+             alert("PLAYER 1 (WHITE) Declared as WINNER")
+              location.reload();
+            }, 1000);
+            
+            
+          } else if (info.winner == "black"){
+            socket.emit('restart', null);
+            setTimeout(() => {
+              // your code here runs after 1 second
+              alert("PLAYER 2 (BLACK) Declared as WINNER")
+            location.reload();
+            }, 1000);
+           
+          }
+          const infoBoard = document.querySelector('.info-board');
+          const currentPlayerText = infoBoard.querySelector('p');
+          if (info.master.whos_turn == global_player.player1){
+            currentPlayerText.textContent = 'Current Player: White';
+          } else if (info.master.whos_turn == global_player.player2){
+            currentPlayerText.textContent = 'Current Player: Black';
+          }
+          
+          if (my_id == global_player.player1){
+            //you are player 1
+            let infoo = document.querySelectorAll('.bottom-buttons .bottom-info-board');
+            infoo.forEach((board, index) => {
+              // let stoneDisplay = board.querySelector('.stone-display');
+              let countText = board.querySelector('h3');
+
+              // stoneDisplay.textContent = `White ${index + 1}`;
+              countText.textContent = `x${info.master.player1_stone[index]}`;
+            });
+          } else if (my_id == global_player.player2){
+            //you are player 2
+            let infoo = document.querySelectorAll('.bottom-buttons .bottom-info-board');
+            infoo.forEach((board, index) => {
+              // let stoneDisplay = board.querySelector('.stone-display');
+              let countText = board.querySelector('h3');
+
+              // stoneDisplay.textContent = `White ${index + 1}`;
+              countText.textContent = `x${info.master.player2_stone[index]}`;
+            });
+          } else {
+            console.log("do nthing")
+          }
+
+      });
+
+      $('#left-btn').on('click', function() {
+        if (!listenersEnabled) return;
+        
+        let check_id = sessionStorage.getItem('userid');
+        if (check_id == undefined || check_id == null){
+           my_random_id = randomHash(16)
+           sessionStorage.setItem('userid', my_random_id);
+           check_id = my_random_id
+        }
+
+        socket.emit('join_player_one', check_id);
+      
+      // your code here
+      });
+
+      $('#right-btn').on('click', function() {
+        if (!listenersEnabled) return;
+        
+        let check_id = sessionStorage.getItem('userid');
+        if (check_id == undefined || check_id == null){
+           my_random_id = randomHash(16)
+           sessionStorage.setItem('userid', my_random_id);
+           check_id = my_random_id
+        }
+         socket.emit('join_player_two', check_id);
+      // your code here
+      });
+
+     
+    
+});
+  </script>
+
+
+<script>
+  let lastTouchY = 0;
+let maybePrevent = false;
+
+window.addEventListener('touchstart', function(e) {
+  lastTouchY = e.touches[0].clientY;
+  maybePrevent = window.pageYOffset === 0;
+}, { passive: true });
+
+window.addEventListener('touchmove', function(e) {
+  const touchY = e.touches[0].clientY;
+  const touchYDelta = touchY - lastTouchY;
+  lastTouchY = touchY;
+
+  if (maybePrevent) {
+    // If swiping down from top of page
+    if (touchYDelta > 0) {
+      e.preventDefault();  // prevent pull-to-refresh
+    }
+  }
+}, { passive: false });
+</script>
