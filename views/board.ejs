@@ -17,7 +17,7 @@
     <div class="info-board none">
     <h4>Info</h4>
     <p>Current Player: White</p>
-  </div>
+     </div>
     <button class="Btn-custom" id="right-btn">Join As Player Black</button>
      
   </div>
@@ -71,6 +71,11 @@
 <script>
   board_state = <%-JSON.stringify(state) %>;
   global_player = <%-JSON.stringify(global_player) %>
+   let ca = sessionStorage.getItem('userid');
+
+   console.log(ca)
+
+  console.log(global_player)
 
   function init_board(grid){
     const board = document.getElementById("board");
@@ -200,6 +205,21 @@
             crplyrtxt.textContent = 'Current Player: Black';
           }
           abc.classList.remove('none');
+          let stone_stock = document.querySelectorAll('.stone-display');  
+          if (check_id == global_player.player2){
+             stone_stock.forEach(display => {
+              display.classList.remove('white');
+              display.classList.remove('black');
+              display.classList.add('black');
+            });
+          } else {
+            stone_stock.forEach(display => {
+              display.classList.remove('white');
+              display.classList.remove('black');
+              display.classList.add('white');
+            });
+          }
+         
         }
       }
 
@@ -239,6 +259,7 @@
               let my_id = sessionStorage.getItem('userid');
               if (my_id == global_player.player1){
                 displays.forEach(display => {
+                  
                   display.classList.remove('white');
                   display.classList.remove('black');
                   display.classList.add('white');
@@ -278,8 +299,7 @@
              alert("PLAYER 1 (WHITE) Declared as WINNER")
               location.reload();
             }, 1000);
-            
-            
+                       
           } else if (info.winner == "black"){
             socket.emit('restart', null);
             setTimeout(() => {
@@ -291,10 +311,17 @@
           }
           const infoBoard = document.querySelector('.info-board');
           const currentPlayerText = infoBoard.querySelector('p');
+          
           if (info.master.whos_turn == global_player.player1){
             currentPlayerText.textContent = 'Current Player: White';
+            infoBoard.classList.remove("info-board-white")
+            infoBoard.classList.remove("info-board-black")
+            infoBoard.classList.add("info-board-white")
           } else if (info.master.whos_turn == global_player.player2){
             currentPlayerText.textContent = 'Current Player: Black';
+            infoBoard.classList.remove("info-board-white")
+            infoBoard.classList.remove("info-board-black")
+            infoBoard.classList.add("info-board-black")
           }
           
           if (my_id == global_player.player1){
