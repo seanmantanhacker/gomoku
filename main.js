@@ -12,9 +12,8 @@ const io = new Server(server);  // Attach Socket.IO
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
-// Static files (CSS/JS)
 app.use(express.static(path.join(__dirname, 'public')));
+
 global_state_player = {
     player1: null,
     player2: null
@@ -85,7 +84,7 @@ io.on('connection', (socket) => {
   });
   
   socket.on('join_player_two', (player_id) => {
-     console.log(socket.id)
+     
     if (global_state_player.player2 == null) {// player belum ada
          if (global_state_player.player1 == player_id){
             //ignore

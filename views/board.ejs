@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.ico" type="image/png">>
   <title>Gomoku - Connect 16</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -181,7 +181,7 @@
       if (board_state.has_start == true){
         if (check_id == null || (check_id !=global_player.player1 && check_id != global_player.player2)){
           //you are spectator
-          console.log("Spec")
+          
           let elemen1 = document.querySelector('.bottom-buttons');
           elemen1.classList.add('none');
           document.getElementById("left-btn").style.display = "none";       
@@ -191,7 +191,7 @@
         } else {
           //you are player that reload
           const abc = document.querySelector('.top-buttons .info-board');
-          console.log("non spec")
+          
           let crplyrtxt = abc.querySelector('p');
           let elemen2 = document.querySelector('.bottom-buttons');
           elemen2.classList.remove('none');
