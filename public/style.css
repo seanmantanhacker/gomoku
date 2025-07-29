@@ -304,6 +304,10 @@ body {
     text-align: center;
   }
 
+  .gray {
+    background-color: gray !important;
+  }
+  
   .info-board h4 {
     font-size: 4rem;
   }

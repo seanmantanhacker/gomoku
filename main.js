@@ -214,9 +214,9 @@ function scoreLine(line) {
       white -= parsed.value;
     }
   }
-  if (white >= 16){
+  if (white == 16){
     someone_win = 1
-  } else if (black >= 16){
+  } else if (black == 16){
     someone_win = 2
   }
   return { white, black , someone_win };

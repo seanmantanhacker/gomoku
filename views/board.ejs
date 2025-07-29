@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Interactive Board</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <title>Gomoku - Connect 16</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-   <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  
 
 </head>
 <body>
@@ -49,13 +51,13 @@
         <h3>x5</h3>
         <div><button class="Btn-custom2" onclick="chooseSomething(3)">choose</button></div>
       </div>
-      <div class="bottom-info-board">
+      <div class="bottom-info-board gray">
         <div class="stone-display white">4</div>
-        <h3>x5</h3><div><button class="Btn-custom2" onclick="chooseSomething(4)">choose</button></div>
+        <h3>x5</h3><div><button class="Btn-custom2 none " onclick="chooseSomething(4)">choose</button></div>
       </div>
-      <div class="bottom-info-board">
+      <div class="bottom-info-board gray">
         <div class="stone-display white">5</div>
-        <h3>x5</h3><div><button class="Btn-custom2" onclick="chooseSomething(5)">choose</button></div>
+        <h3>x5</h3><div><button class="Btn-custom2 none" onclick="chooseSomething(5)">choose</button></div>
       </div>
 </div>
 
@@ -66,16 +68,12 @@
   //GLOBAL
   let listenersEnabled = true;
   let which_cell_that_i_click = null;
+  let first_move = true;
 </script>
 
 <script>
   board_state = <%-JSON.stringify(state) %>;
   global_player = <%-JSON.stringify(global_player) %>
-   let ca = sessionStorage.getItem('userid');
-
-   console.log(ca)
-
-  console.log(global_player)
 
   function init_board(grid){
     const board = document.getElementById("board");
@@ -219,6 +217,12 @@
               display.classList.add('white');
             });
           }
+          let stone_picker = document.querySelectorAll('.Btn-custom2');
+          if (!first_move){
+            stone_picker.forEach(x => {
+              x.classList.remove("none")
+            })
+          } 
          
         }
       }
@@ -285,6 +289,7 @@
 
        socket.on('update_move', (info) => {
           board_state = info.master
+          first_move = false
           update_board(info.update.cell,info.update.type,info.update.value)
           // Play Sound
           const sound = document.getElementById('clickSound');
@@ -330,7 +335,12 @@
             infoo.forEach((board, index) => {
               // let stoneDisplay = board.querySelector('.stone-display');
               let countText = board.querySelector('h3');
-
+              board.classList.remove("gray")
+              let h = board.querySelector(".Btn-custom2")
+              if (!first_move){
+                h.classList.remove("none")
+              }
+            
               // stoneDisplay.textContent = `White ${index + 1}`;
               countText.textContent = `x${info.master.player1_stone[index]}`;
             });
@@ -340,7 +350,11 @@
             infoo.forEach((board, index) => {
               // let stoneDisplay = board.querySelector('.stone-display');
               let countText = board.querySelector('h3');
-
+              board.classList.remove("gray")
+              let h = board.querySelector(".Btn-custom2")           
+              if (!first_move){
+                h.classList.remove("none")
+              }
               // stoneDisplay.textContent = `White ${index + 1}`;
               countText.textContent = `x${info.master.player2_stone[index]}`;
             });
