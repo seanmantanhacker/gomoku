@@ -2,421 +2,578 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.ico" type="image/png">>
-  <title>Gomoku - Connect 16</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <title>Make It 16 - Gomoku Number Strategy</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  
-
 </head>
 <body>
-  <!-- Top Buttons -->
-   <audio id="clickSound" src="/mixkit-sick-man-sneeze-2213.wav" preload="auto"></audio>
-   
-  <div class="top-buttons">
-    <button class="Btn-custom" id="left-btn">Join As Player White</button>
-    <div class="info-board none">
-    <h4>Info</h4>
-    <p>Current Player: White</p>
-     </div>
-    <button class="Btn-custom" id="right-btn">Join As Player Black</button>
-     
-  </div>
-  
+  <audio id="clickSound" src="/mixkit-sick-man-sneeze-2213.wav" preload="auto"></audio>
 
-  <div id="countdownModal" class="none">
-    <div class="center-content">
-      <span>Make it 16</span>
-      <span id="countdownText">10</span>
+  <!-- Navigation & Header Bar -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">16</div>
+      <div class="brand-title">MAKE IT 16</div>
+      <span class="brand-badge">Gomoku</span>
+    </div>
+
+    <div class="header-status" id="matchStatusPill">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="matchStatusText">Waiting for Players...</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="spectator-badge" id="spectatorBadge" title="Current spectators in the room">
+        👁️ <span id="spectatorCount">0</span>
+      </div>
+      <button class="btn-icon-text" id="btnRules" title="How to play">
+        ℹ️ <span>Rules</span>
+      </button>
+      <button class="btn-icon-text" id="btnMute" title="Toggle sound">
+        🔊 <span>Sound</span>
+      </button>
+      <button class="btn-icon-text" id="btnRestart" title="Restart room">
+        🔄 <span>Reset</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Match Arena -->
+  <main class="match-arena">
+    <!-- Players VS Bar -->
+    <div class="players-bar">
+      <!-- Player 1 Card (White) -->
+      <div class="player-card" id="cardPlayer1">
+        <div class="player-avatar white-stone">⚪</div>
+        <div class="player-meta">
+          <div class="player-title">Player 1 (White)</div>
+          <div class="player-status-tag" id="statusPlayer1">Vacant</div>
+        </div>
+        <button class="btn-join" id="btnJoinPlayer1">Join</button>
+      </div>
+
+      <div class="vs-badge">VS</div>
+
+      <!-- Player 2 Card (Black) -->
+      <div class="player-card" id="cardPlayer2">
+        <div class="player-avatar black-stone">⚫</div>
+        <div class="player-meta">
+          <div class="player-title">Player 2 (Black)</div>
+          <div class="player-status-tag" id="statusPlayer2">Vacant</div>
+        </div>
+        <button class="btn-join" id="btnJoinPlayer2">Join</button>
+      </div>
+    </div>
+
+    <!-- Viewer Role Banner -->
+    <div class="role-banner" id="roleBanner">
+      Connecting to room...
+    </div>
+
+    <!-- The 15x15 Gomoku Board -->
+    <div class="board-wrapper">
+      <div class="board" id="board"></div>
+    </div>
+
+    <!-- Bottom Player Inventory / Action Tray -->
+    <div class="action-tray none" id="actionTray">
+      <div class="tray-header">
+        <span class="tray-title" id="trayOwnerText">Your Stones</span>
+        <span id="trayHintText">Click a cell on the board, then select a stone:</span>
+      </div>
+      <div class="stone-selector-grid">
+        <!-- Stone 1 -->
+        <div class="stone-card" data-stone="1" id="stoneCard1">
+          <div class="stone-preview white" id="previewStone1">1</div>
+          <span class="stock-count" id="countStone1">x5</span>
+          <button class="btn-place" onclick="chooseSomething(1)">Place</button>
+        </div>
+        <!-- Stone 2 -->
+        <div class="stone-card" data-stone="2" id="stoneCard2">
+          <div class="stone-preview white" id="previewStone2">2</div>
+          <span class="stock-count" id="countStone2">x5</span>
+          <button class="btn-place" onclick="chooseSomething(2)">Place</button>
+        </div>
+        <!-- Stone 3 -->
+        <div class="stone-card" data-stone="3" id="stoneCard3">
+          <div class="stone-preview white" id="previewStone3">3</div>
+          <span class="stock-count" id="countStone3">x5</span>
+          <button class="btn-place" onclick="chooseSomething(3)">Place</button>
+        </div>
+        <!-- Stone 4 -->
+        <div class="stone-card locked" data-stone="4" id="stoneCard4">
+          <span class="lock-badge" id="lockBadge4">Move 2+</span>
+          <div class="stone-preview white" id="previewStone4">4</div>
+          <span class="stock-count" id="countStone4">x5</span>
+          <button class="btn-place" onclick="chooseSomething(4)">Place</button>
+        </div>
+        <!-- Stone 5 -->
+        <div class="stone-card locked" data-stone="5" id="stoneCard5">
+          <span class="lock-badge" id="lockBadge5">Move 2+</span>
+          <div class="stone-preview white" id="previewStone5">5</div>
+          <span class="stock-count" id="countStone5">x5</span>
+          <button class="btn-place" onclick="chooseSomething(5)">Place</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 10-Second Countdown Modal -->
+  <div class="modal-overlay none" id="countdownModal">
+    <div class="modal-card">
+      <h2>Match Starting!</h2>
+      <p>Both players are ready. Prepare your strategy.</p>
+      <div class="countdown-number" id="countdownText">10</div>
     </div>
   </div>
-  
-  <div class="board" id="board"></div>
- 
 
-   <div class="bottom-buttons none">
-      <div class="bottom-info-board">
-        <div class="stone-display white">1</div>
-        <h3>x5</h3><div>
-          <button class="Btn-custom2" onclick="chooseSomething(1)">choose</button></div>
+  <!-- Victory / Game Over Modal -->
+  <div class="modal-overlay none" id="victoryModal">
+    <div class="modal-card">
+      <h2 id="victoryTitle">🏆 Victory!</h2>
+      <p id="victoryDesc">Player 1 (White) achieved a line sum of 16!</p>
+      <button class="btn-primary" id="btnPlayAgain">Play Again</button>
+    </div>
+  </div>
+
+  <!-- How to Play Modal -->
+  <div class="modal-overlay none" id="rulesModal">
+    <div class="modal-card" style="max-width: 500px;">
+      <h2>How to Play "Make It 16"</h2>
+      <div class="rule-list">
+        <div class="rule-item">
+          <span class="rule-icon">🎯</span>
+          <span><strong>Objective:</strong> Be the first player to achieve a net sum of <strong>exactly 16</strong> along any row, column, or diagonal line.</span>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⚖️</span>
+          <span><strong>Tug-of-War Scoring:</strong> In each line, your stones <strong>add</strong> points, while opponent stones <strong>subtract</strong> points!</span>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">🔢</span>
+          <span><strong>Stone Pool:</strong> Each player has 25 stones (5 of each number: 1, 2, 3, 4, 5). Use your high and low numbers wisely!</span>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">🔒</span>
+          <span><strong>Opening Balance:</strong> Stones 4 and 5 are locked on Move 1, and unlock from Move 2 onwards.</span>
+        </div>
       </div>
-      <div class="bottom-info-board">
-        <div class="stone-display white">2</div>
-        <h3>x5</h3>
-        <div><button class="Btn-custom2" onclick="chooseSomething(2)">choose</button></div>
-      </div>
-      <div class="bottom-info-board">
-        <div class="stone-display white">3</div>
-        <h3>x5</h3>
-        <div><button class="Btn-custom2" onclick="chooseSomething(3)">choose</button></div>
-      </div>
-      <div class="bottom-info-board gray">
-        <div class="stone-display white">4</div>
-        <h3>x5</h3><div><button class="Btn-custom2 none " onclick="chooseSomething(4)">choose</button></div>
-      </div>
-      <div class="bottom-info-board gray">
-        <div class="stone-display white">5</div>
-        <h3>x5</h3><div><button class="Btn-custom2 none" onclick="chooseSomething(5)">choose</button></div>
-      </div>
-</div>
-
-</body>
-</html>
-
-<script>
-  //GLOBAL
-  let listenersEnabled = true;
-  let which_cell_that_i_click = null;
-  let first_move = true;
-</script>
-
-<script>
-  board_state = <%-JSON.stringify(state) %>;
-  global_player = <%-JSON.stringify(global_player) %>
-
-  function init_board(grid){
-    const board = document.getElementById("board");
-    
-    for (let i = 0; i < (board_state.state.length); i++) {
-      const cell = document.createElement("div");
-      cell.classList.add("cell");
-      cell.dataset.id = i;
-      cell.addEventListener("click", () => {
-        if (cell.querySelector(".stone")) return;
-        if (!listenersEnabled) return;
-        const cellId = cell.dataset.id;
-        
-        which_cell_that_i_click = cellId
-        const prevSelected = document.querySelector(".cell.selected");
-        if (prevSelected) {
-          prevSelected.classList.remove("selected");
-        }
-        cell.classList.add("selected");
-        
-      });
-      if (board_state.state[i] != 0){
-        let type = board_state.state[i][0]
-        let value = board_state.state[i][1]
-        const stone = document.createElement("div");
-        if (type == "b"){
-          stone.classList.add("stone", "black");
-          stone.textContent = value;
-        } else if (type == "w"){
-          stone.classList.add("stone", "white");
-          stone.textContent = value;
-        }
-        
-        cell.appendChild(stone);
-      }
-        board.appendChild(cell);
-      
-    }
-  }
-  function update_board(cell,type,value){
-    const targetCell = document.querySelector(`.cell[data-id="${cell}"]`);
-
-    if (targetCell) {
-      const stone_test = targetCell.querySelector('.stone'); 
-      if (stone_test) {
-        targetCell.removeChild(stone_test);  // remove the .stone div from .cell
-      }
-      const stone = document.createElement("div");
-      let color = "white"
-      if (type == 0){
-        color = "white"
-      } else if (type == 1){
-        color = "black"
-      }
-      stone.classList.add("stone",color);
-      stone.textContent = value;
-      targetCell.appendChild(stone);
-    }
-  }
-  function randomHash(length = 16) {
-    // Generate `length` bytes, then convert to hex string
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-    
-  </script>
+      <button class="btn-primary" id="btnCloseRules">Got It</button>
+    </div>
+  </div>
 
   <script>
-    const socket = io(); //connect
-    function chooseSomething(id){
-        let cell = which_cell_that_i_click
-        let check_id = sessionStorage.getItem('userid');
+    // Initial server state injected via EJS
+    let board_state = <%-JSON.stringify(state) %>;
+    let global_player = <%-JSON.stringify(global_player) %>;
 
-        if (cell == null) return;
-        if (board_state.state[cell] != 0) return;
-        if (check_id == global_player.player1){
-          if (board_state.player1_stone[id-1] <= 0){
-            return // tidak valid
-          }
-        } else if (check_id == global_player.player2){
-          if (board_state.player2_stone[id-1] <= 0){
-            return // tidak valid
-          }
-        } 
-        let data = {
-          whoami : check_id,
-          move : id,
-          cell: cell
-        }
-        
-        socket.emit("my_turn",data)
+    // Client variables
+    let listenersEnabled = true;
+    let selectedCellId = null;
+    let isMuted = localStorage.getItem('make16_muted') === 'true';
+    const GRID_SIZE = 15;
+
+    // Hoshi (Star Point) Coordinates in 15x15 Gomoku (0-indexed: 3, 7, 11)
+    const HOSHI_POINTS = new Set([
+      3 * 15 + 3,  3 * 15 + 7,  3 * 15 + 11,
+      7 * 15 + 3,  7 * 15 + 7,  7 * 15 + 11,
+      11 * 15 + 3, 11 * 15 + 7, 11 * 15 + 11
+    ]);
+
+    // Ensure session userid
+    function getUserId() {
+      let id = sessionStorage.getItem('userid');
+      if (!id) {
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        id = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+        sessionStorage.setItem('userid', id);
+      }
+      return id;
     }
-    $(document).ready(function () {
+    const myUserId = getUserId();
 
-      grid_count = 15
-      document.documentElement.style.setProperty('--grid-count', grid_count);
-      document.documentElement.style.setProperty('--cell-size', `60px`);
-      
-      init_board(grid_count)
+    // Sound handling
+    function playStoneSound() {
+      if (isMuted) return;
+      const sound = document.getElementById('clickSound');
+      if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(() => {});
+      }
+    }
 
-      let check_id = sessionStorage.getItem('userid');
+    function updateMuteButtonUI() {
+      const btn = document.getElementById('btnMute');
+      if (isMuted) {
+        btn.innerHTML = '🔇 <span>Muted</span>';
+      } else {
+        btn.innerHTML = '🔊 <span>Sound</span>';
+      }
+    }
 
-      if (board_state.has_start == true){
-        if (check_id == null || (check_id !=global_player.player1 && check_id != global_player.player2)){
-          //you are spectator
-          
-          let elemen1 = document.querySelector('.bottom-buttons');
-          elemen1.classList.add('none');
-          document.getElementById("left-btn").style.display = "none";       
-          document.getElementById("right-btn").style.display = "none";
-          aa = document.querySelector('.top-buttons .info-board');
-          aa.classList.remove('none');
-        } else {
-          //you are player that reload
-          const abc = document.querySelector('.top-buttons .info-board');
-          
-          let crplyrtxt = abc.querySelector('p');
-          let elemen2 = document.querySelector('.bottom-buttons');
-          elemen2.classList.remove('none');
-          document.getElementById("left-btn").style.display = "none";       
-          document.getElementById("right-btn").style.display = "none";
-          if (board_state.whos_turn == global_player.player1){
-            crplyrtxt.textContent = 'Current Player: White';
-          } else if (board_state.whos_turn == global_player.player2){
-            crplyrtxt.textContent = 'Current Player: Black';
-          }
-          abc.classList.remove('none');
-          let stone_stock = document.querySelectorAll('.stone-display');  
-          if (check_id == global_player.player2){
-             stone_stock.forEach(display => {
-              display.classList.remove('white');
-              display.classList.remove('black');
-              display.classList.add('black');
-            });
-          } else {
-            stone_stock.forEach(display => {
-              display.classList.remove('white');
-              display.classList.remove('black');
-              display.classList.add('white');
-            });
-          }
-          let stone_picker = document.querySelectorAll('.Btn-custom2');
-          if (!first_move){
-            stone_picker.forEach(x => {
-              x.classList.remove("none")
-            })
-          } 
-         
+    // Build the 15x15 board
+    function initBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+
+      for (let i = 0; i < board_state.state.length; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.id = i;
+
+        if (HOSHI_POINTS.has(i)) {
+          cell.classList.add('star-point');
         }
+
+        cell.addEventListener('click', () => {
+          if (!listenersEnabled) return;
+          if (cell.querySelector('.stone')) return; // already has stone
+
+          // If not our turn, don't allow selecting
+          const isMyTurn = (board_state.whos_turn === myUserId);
+          if (!board_state.has_start || !isMyTurn) return;
+
+          selectedCellId = i;
+          document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+        });
+
+        // Place existing stone if any
+        const val = board_state.state[i];
+        if (val && val !== 0) {
+          const type = val[0]; // 'w' or 'b'
+          const num = val.substring(1);
+          const stone = document.createElement('div');
+          stone.classList.add('stone', type === 'b' ? 'black' : 'white');
+          stone.textContent = num;
+          cell.appendChild(stone);
+        }
+
+        board.appendChild(cell);
+      }
+    }
+
+    function updateCellStone(cellIndex, colorType, value) {
+      const targetCell = document.querySelector(`.cell[data-id="${cellIndex}"]`);
+      if (!targetCell) return;
+
+      const existing = targetCell.querySelector('.stone');
+      if (existing) targetCell.removeChild(existing);
+
+      const stone = document.createElement('div');
+      stone.classList.add('stone', colorType === 1 ? 'black' : 'white');
+      stone.textContent = value;
+      targetCell.appendChild(stone);
+      targetCell.classList.remove('selected');
+    }
+
+    // Update entire UI according to current room status
+    function refreshUI() {
+      const cardP1 = document.getElementById('cardPlayer1');
+      const cardP2 = document.getElementById('cardPlayer2');
+      const btnJoinP1 = document.getElementById('btnJoinPlayer1');
+      const btnJoinP2 = document.getElementById('btnJoinPlayer2');
+      const statusP1 = document.getElementById('statusPlayer1');
+      const statusP2 = document.getElementById('statusPlayer2');
+      const roleBanner = document.getElementById('roleBanner');
+      const statusPillText = document.getElementById('matchStatusText');
+      const statusDot = document.getElementById('statusDot');
+      const actionTray = document.getElementById('actionTray');
+
+      // Player 1 state
+      if (global_player.player1) {
+        statusP1.textContent = 'Ready';
+        statusP1.classList.add('ready');
+        btnJoinP1.style.display = 'none';
+        if (global_player.player1 === myUserId) {
+          cardP1.classList.add('is-you');
+        } else {
+          cardP1.classList.remove('is-you');
+        }
+      } else {
+        statusP1.textContent = 'Vacant';
+        statusP1.classList.remove('ready');
+        btnJoinP1.style.display = (global_player.player2 === myUserId) ? 'none' : 'inline-block';
+        cardP1.classList.remove('is-you');
       }
 
-      socket.on('broadcast_player', (data) => {
-       
-        global_player = data.global
-        help = `player ${data.data}`
-        if (data.data == 1){
-          document.getElementById('left-btn').textContent = 'Player 1 Ready';
-           document.getElementById('left-btn').classList.add('booked');
-        } else if (data.data == 2){
-          document.getElementById('right-btn').textContent = 'Player 2 Ready';
-          document.getElementById('right-btn').classList.add('booked');
-        }     
-      });
+      // Player 2 state
+      if (global_player.player2) {
+        statusP2.textContent = 'Ready';
+        statusP2.classList.add('ready');
+        btnJoinP2.style.display = 'none';
+        if (global_player.player2 === myUserId) {
+          cardP2.classList.add('is-you');
+        } else {
+          cardP2.classList.remove('is-you');
+        }
+      } else {
+        statusP2.textContent = 'Vacant';
+        statusP2.classList.remove('ready');
+        btnJoinP2.style.display = (global_player.player1 === myUserId) ? 'none' : 'inline-block';
+        cardP2.classList.remove('is-you');
+      }
 
-      socket.on('game_countdown', (data) => {
-          listenersEnabled = false
-          
-          document.getElementById("left-btn").style.display = "none";       
-          document.getElementById("right-btn").style.display = "none";
-           let count = 10;
-          const countdownText = document.getElementById('countdownText');
-          const modal = document.getElementById('countdownModal');
-          
-          modal.classList.remove('none');
-          const interval = setInterval(() => {
-            count--;
-            if (count > 0) {
-              countdownText.textContent = count;
-            } else {
-              clearInterval(interval);
-              modal.classList.add('none'); // Hide modal after countdown
-              const infotop = document.querySelector('.top-buttons .info-board');
-              infotop.classList.remove('none');
-              const displays = document.querySelectorAll('.stone-display');   
-              let my_id = sessionStorage.getItem('userid');
-              if (my_id == global_player.player1){
-                displays.forEach(display => {
-                  
-                  display.classList.remove('white');
-                  display.classList.remove('black');
-                  display.classList.add('white');
-              });
-              } else if (my_id == global_player.player2){
-                displays.forEach(display => {
-                  display.classList.remove('white');
-                  display.classList.remove('black');
-                  display.classList.add('black');
-              });
-              }
-              const infoBot = document.querySelector('.bottom-buttons');
-              infoBot.classList.remove('none');
-              if (my_id == global_player.player1 || my_id == global_player.player2){
-                socket.emit('game_start',my_id);
-              }
-              listenersEnabled = true;
-              
+      // Viewer role
+      if (myUserId === global_player.player1) {
+        roleBanner.textContent = '⚪ You are playing as Player 1 (White)';
+        roleBanner.className = 'role-banner role-player';
+      } else if (myUserId === global_player.player2) {
+        roleBanner.textContent = '⚫ You are playing as Player 2 (Black)';
+        roleBanner.className = 'role-banner role-player';
+      } else {
+        roleBanner.textContent = '👀 You are Spectating (Live Room)';
+        roleBanner.className = 'role-banner role-spectator';
+      }
 
-            }
-          }, 1000);
-      });
+      // Active turn & match status
+      cardP1.classList.remove('active-turn');
+      cardP2.classList.remove('active-turn');
+      statusDot.classList.remove('active-turn');
 
-       socket.on('update_move', (info) => {
-          board_state = info.master
-          first_move = false
-          update_board(info.update.cell,info.update.type,info.update.value)
-          // Play Sound
-          const sound = document.getElementById('clickSound');
-          sound.currentTime = 0; // rewind if already played
-          sound.play();
-          // update info
-          let my_id = sessionStorage.getItem('userid');
-          if (info.winner == "white"){
-            socket.emit('restart', null);
-            setTimeout(() => {
-              // your code here runs after 1 second
-             alert("PLAYER 1 (WHITE) Declared as WINNER")
-              location.reload();
-            }, 1000);
-                       
-          } else if (info.winner == "black"){
-            socket.emit('restart', null);
-            setTimeout(() => {
-              // your code here runs after 1 second
-              alert("PLAYER 2 (BLACK) Declared as WINNER")
-            location.reload();
-            }, 1000);
-           
-          }
-          const infoBoard = document.querySelector('.info-board');
-          const currentPlayerText = infoBoard.querySelector('p');
-          
-          if (info.master.whos_turn == global_player.player1){
-            currentPlayerText.textContent = 'Current Player: White';
-            infoBoard.classList.remove("info-board-white")
-            infoBoard.classList.remove("info-board-black")
-            infoBoard.classList.add("info-board-white")
-          } else if (info.master.whos_turn == global_player.player2){
-            currentPlayerText.textContent = 'Current Player: Black';
-            infoBoard.classList.remove("info-board-white")
-            infoBoard.classList.remove("info-board-black")
-            infoBoard.classList.add("info-board-black")
-          }
-          
-          if (my_id == global_player.player1){
-            //you are player 1
-            let infoo = document.querySelectorAll('.bottom-buttons .bottom-info-board');
-            infoo.forEach((board, index) => {
-              // let stoneDisplay = board.querySelector('.stone-display');
-              let countText = board.querySelector('h3');
-              board.classList.remove("gray")
-              let h = board.querySelector(".Btn-custom2")
-              if (!first_move){
-                h.classList.remove("none")
-              }
-            
-              // stoneDisplay.textContent = `White ${index + 1}`;
-              countText.textContent = `x${info.master.player1_stone[index]}`;
-            });
-          } else if (my_id == global_player.player2){
-            //you are player 2
-            let infoo = document.querySelectorAll('.bottom-buttons .bottom-info-board');
-            infoo.forEach((board, index) => {
-              // let stoneDisplay = board.querySelector('.stone-display');
-              let countText = board.querySelector('h3');
-              board.classList.remove("gray")
-              let h = board.querySelector(".Btn-custom2")           
-              if (!first_move){
-                h.classList.remove("none")
-              }
-              // stoneDisplay.textContent = `White ${index + 1}`;
-              countText.textContent = `x${info.master.player2_stone[index]}`;
-            });
+      if (!board_state.has_start) {
+        statusPillText.textContent = 'Waiting for Players...';
+        actionTray.classList.add('none');
+      } else {
+        const isWhiteTurn = (board_state.whos_turn === global_player.player1);
+        statusDot.classList.add('active-turn');
+
+        if (isWhiteTurn) {
+          statusPillText.textContent = "⚪ White's Turn";
+          cardP1.classList.add('active-turn');
+        } else {
+          statusPillText.textContent = "⚫ Black's Turn";
+          cardP2.classList.add('active-turn');
+        }
+
+        // Show tray only to active player
+        const isMyTurn = (board_state.whos_turn === myUserId);
+        const amIPlayer = (myUserId === global_player.player1 || myUserId === global_player.player2);
+
+        if (amIPlayer) {
+          actionTray.classList.remove('none');
+          updateInventoryUI();
+          if (isMyTurn) {
+            document.getElementById('trayHintText').textContent = 'Your turn! Select a cell, then place a stone:';
           } else {
-            console.log("do nthing")
+            document.getElementById('trayHintText').textContent = "Opponent's turn. Planning your next move...";
           }
-
-      });
-
-      $('#left-btn').on('click', function() {
-        if (!listenersEnabled) return;
-        
-        let check_id = sessionStorage.getItem('userid');
-        if (check_id == undefined || check_id == null){
-           my_random_id = randomHash(16)
-           sessionStorage.setItem('userid', my_random_id);
-           check_id = my_random_id
+        } else {
+          actionTray.classList.add('none');
         }
-
-        socket.emit('join_player_one', check_id);
-      
-      // your code here
-      });
-
-      $('#right-btn').on('click', function() {
-        if (!listenersEnabled) return;
-        
-        let check_id = sessionStorage.getItem('userid');
-        if (check_id == undefined || check_id == null){
-           my_random_id = randomHash(16)
-           sessionStorage.setItem('userid', my_random_id);
-           check_id = my_random_id
-        }
-         socket.emit('join_player_two', check_id);
-      // your code here
-      });
-
-     
-    
-});
-  </script>
-
-
-<script>
-  let lastTouchY = 0;
-let maybePrevent = false;
-
-window.addEventListener('touchstart', function(e) {
-  lastTouchY = e.touches[0].clientY;
-  maybePrevent = window.pageYOffset === 0;
-}, { passive: true });
-
-window.addEventListener('touchmove', function(e) {
-  const touchY = e.touches[0].clientY;
-  const touchYDelta = touchY - lastTouchY;
-  lastTouchY = touchY;
-
-  if (maybePrevent) {
-    // If swiping down from top of page
-    if (touchYDelta > 0) {
-      e.preventDefault();  // prevent pull-to-refresh
+      }
     }
-  }
-}, { passive: false });
-</script>
+
+    // Update bottom inventory stone counts and lock state
+    function updateInventoryUI() {
+      const amIWhite = (myUserId === global_player.player1);
+      const stones = amIWhite ? board_state.player1_stone : board_state.player2_stone;
+      if (!stones) return;
+
+      const isMyTurn = (board_state.whos_turn === myUserId);
+      const totalStonesPlaced = board_state.state.filter(c => c !== 0).length;
+      const isMoveOne = (totalStonesPlaced === 0);
+
+      const colorClass = amIWhite ? 'white' : 'black';
+
+      for (let i = 1; i <= 5; i++) {
+        const card = document.getElementById(`stoneCard${i}`);
+        const preview = document.getElementById(`previewStone${i}`);
+        const countSpan = document.getElementById(`countStone${i}`);
+        const placeBtn = card.querySelector('.btn-place');
+
+        // Color preview
+        preview.className = `stone-preview ${colorClass}`;
+
+        const remaining = stones[i - 1];
+        countSpan.textContent = `x${remaining}`;
+
+        // Disable if 0 stock
+        if (remaining <= 0) {
+          card.classList.add('disabled');
+          placeBtn.disabled = true;
+        } else {
+          card.classList.remove('disabled');
+          placeBtn.disabled = !isMyTurn;
+        }
+
+        // Opening rule: stones 4 and 5 locked on move 1
+        if (i >= 4) {
+          if (isMoveOne) {
+            card.classList.add('locked');
+            placeBtn.disabled = true;
+          } else {
+            card.classList.remove('locked');
+            if (remaining > 0 && isMyTurn) {
+              placeBtn.disabled = false;
+            }
+          }
+        }
+      }
+    }
+
+    // Stone placement trigger
+    function chooseSomething(stoneValue) {
+      if (!listenersEnabled) return;
+      if (!board_state.has_start) return;
+      if (board_state.whos_turn !== myUserId) return;
+
+      if (selectedCellId === null) {
+        alert('Please click an empty cell on the board first!');
+        return;
+      }
+      if (board_state.state[selectedCellId] !== 0) {
+        alert('This cell is already occupied.');
+        return;
+      }
+
+      // Check stock
+      const amIWhite = (myUserId === global_player.player1);
+      const stones = amIWhite ? board_state.player1_stone : board_state.player2_stone;
+      if (stones[stoneValue - 1] <= 0) {
+        return;
+      }
+
+      // Emit move
+      const payload = {
+        whoami: myUserId,
+        move: stoneValue,
+        cell: selectedCellId
+      };
+      socket.emit('my_turn', payload);
+      selectedCellId = null;
+    }
+
+    // Socket.IO Setup
+    const socket = io();
+
+    // Broadcast room status (spectators count & sync)
+    socket.on('room_status', (data) => {
+      global_player = data.global;
+      board_state = data.information;
+      document.getElementById('spectatorCount').textContent = data.spectators || 0;
+      refreshUI();
+    });
+
+    socket.on('spectator_count', (count) => {
+      document.getElementById('spectatorCount').textContent = count || 0;
+    });
+
+    socket.on('broadcast_player', (data) => {
+      global_player = data.global;
+      refreshUI();
+    });
+
+    socket.on('game_countdown', (info) => {
+      board_state = info;
+      listenersEnabled = false;
+      const modal = document.getElementById('countdownModal');
+      const countdownText = document.getElementById('countdownText');
+      modal.classList.remove('none');
+
+      let count = 10;
+      countdownText.textContent = count;
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownText.textContent = count;
+        } else {
+          clearInterval(interval);
+          modal.classList.add('none');
+          listenersEnabled = true;
+
+          if (myUserId === global_player.player1 || myUserId === global_player.player2) {
+            socket.emit('game_start', myUserId);
+          }
+        }
+      }, 1000);
+
+      refreshUI();
+    });
+
+    socket.on('update_move', (info) => {
+      board_state = info.master;
+      updateCellStone(info.update.cell, info.update.type, info.update.value);
+      playStoneSound();
+
+      // Check winner
+      if (info.winner) {
+        listenersEnabled = false;
+        // Highlight winning line if provided
+        if (info.winningCells && info.winningCells.length > 0) {
+          info.winningCells.forEach(idx => {
+            const c = document.querySelector(`.cell[data-id="${idx}"]`);
+            if (c) c.classList.add('winning-cell');
+          });
+        }
+
+        const isWhite = (info.winner === 'white');
+        const winnerName = isWhite ? 'Player 1 (White)' : 'Player 2 (Black)';
+        document.getElementById('victoryTitle').textContent = `🏆 ${winnerName} Wins!`;
+        document.getElementById('victoryDesc').textContent = `Achieved a net line sum of 16!`;
+        
+        setTimeout(() => {
+          document.getElementById('victoryModal').classList.remove('none');
+        }, 600);
+      }
+
+      refreshUI();
+    });
+
+    socket.on('game_restarted', (data) => {
+      board_state = data.information;
+      global_player = data.global;
+      listenersEnabled = true;
+      selectedCellId = null;
+
+      document.getElementById('victoryModal').classList.add('none');
+      document.getElementById('countdownModal').classList.add('none');
+
+      initBoard();
+      refreshUI();
+    });
+
+    // DOM Ready Event Handlers
+    $(document).ready(function () {
+      updateMuteButtonUI();
+      initBoard();
+      refreshUI();
+
+      // Join buttons
+      $('#btnJoinPlayer1').on('click', function () {
+        if (!listenersEnabled) return;
+        socket.emit('join_player_one', myUserId);
+      });
+
+      $('#btnJoinPlayer2').on('click', function () {
+        if (!listenersEnabled) return;
+        socket.emit('join_player_two', myUserId);
+      });
+
+      // Play Again & Reset
+      $('#btnPlayAgain, #btnRestart').on('click', function () {
+        socket.emit('restart', null);
+      });
+
+      // Rules modal
+      $('#btnRules').on('click', function () {
+        $('#rulesModal').removeClass('none');
+      });
+      $('#btnCloseRules').on('click', function () {
+        $('#rulesModal').addClass('none');
+      });
+
+      // Mute toggle
+      $('#btnMute').on('click', function () {
+        isMuted = !isMuted;
+        localStorage.setItem('make16_muted', isMuted);
+        updateMuteButtonUI();
+      });
+    });
+  </script>
+</body>
+</html>
