@@ -119,6 +119,51 @@
         </div>
       </div>
     </div>
+
+    <!-- Non-Blocking Victory Celebration Banner -->
+    <div class="victory-banner none" id="victoryBanner">
+      <!-- Full Victory Details Mode -->
+      <div class="victory-content" id="victoryContent">
+        <div class="victory-main-info">
+          <div class="victory-trophy-badge" id="victoryTrophyBadge">🏆</div>
+          <div class="victory-text-group">
+            <div class="victory-title-row">
+              <h2 class="victory-title" id="victoryTitle">Player 1 (White) Wins!</h2>
+              <span class="victory-target-badge">Sum: 16</span>
+            </div>
+            <div class="victory-detail-row">
+              <span class="victory-line-desc" id="victoryLineDesc">Winning Line:</span>
+              <span class="victory-formula" id="victoryFormula">Net Line Sum = 16</span>
+            </div>
+          </div>
+        </div>
+        <div class="victory-actions">
+          <button class="btn-inspect" id="btnToggleInspect" title="Minimize banner to fully inspect the board">
+            <span id="inspectIcon">👁️</span> <span id="inspectLabel">Inspect Board</span>
+          </button>
+          <button class="btn-play-again" id="btnPlayAgain">
+            🔄 <span>Play Again</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Minimized Mode for unobstructed inspection -->
+      <div class="victory-minimized none" id="victoryMinimized">
+        <div class="mini-status">
+          <span class="mini-trophy">🏆</span>
+          <span class="mini-winner" id="miniWinnerText">Player 1 Wins!</span>
+          <span class="mini-formula" id="miniFormula">Sum: 16</span>
+        </div>
+        <div class="mini-actions">
+          <button class="btn-inspect-mini" id="btnExpandBanner" title="Show victory details">
+            📋 <span>Show Details</span>
+          </button>
+          <button class="btn-play-again-mini" id="btnPlayAgainMini">
+            🔄 <span>Play Again</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- 10-Second Countdown Modal -->
@@ -127,15 +172,6 @@
       <h2>Match Starting!</h2>
       <p>Both players are ready. Prepare your strategy.</p>
       <div class="countdown-number" id="countdownText">10</div>
-    </div>
-  </div>
-
-  <!-- Victory / Game Over Modal -->
-  <div class="modal-overlay none" id="victoryModal">
-    <div class="modal-card">
-      <h2 id="victoryTitle">🏆 Victory!</h2>
-      <p id="victoryDesc">Player 1 (White) achieved a line sum of 16!</p>
-      <button class="btn-primary" id="btnPlayAgain">Play Again</button>
     </div>
   </div>
 
@@ -255,6 +291,87 @@
 
         board.appendChild(cell);
       }
+
+      if (board_state.winner && board_state.winningCells) {
+        highlightWinningCells(board_state.winningCells);
+      }
+    }
+
+    function highlightWinningCells(cells) {
+      document.querySelectorAll('.cell.winning-cell').forEach(c => c.classList.remove('winning-cell'));
+      if (cells && Array.isArray(cells)) {
+        cells.forEach(idx => {
+          const c = document.querySelector(`.cell[data-id="${idx}"]`);
+          if (c) c.classList.add('winning-cell');
+        });
+      }
+    }
+
+    function showVictoryUI(winner, winningCells, winningDetails) {
+      listenersEnabled = false;
+      highlightWinningCells(winningCells);
+
+      // Hide active tray, reveal non-blocking victory banner
+      const actionTray = document.getElementById('actionTray');
+      if (actionTray) actionTray.classList.add('none');
+
+      const banner = document.getElementById('victoryBanner');
+      const content = document.getElementById('victoryContent');
+      const minimized = document.getElementById('victoryMinimized');
+      const title = document.getElementById('victoryTitle');
+      const lineDesc = document.getElementById('victoryLineDesc');
+      const formula = document.getElementById('victoryFormula');
+      const miniWinner = document.getElementById('miniWinnerText');
+      const miniFormula = document.getElementById('miniFormula');
+      const statusPillText = document.getElementById('matchStatusText');
+      const statusDot = document.getElementById('statusDot');
+
+      const isWhite = (winner === 'white');
+      const winnerName = isWhite ? 'Player 1 (White)' : 'Player 2 (Black)';
+
+      if (title) title.textContent = `${winnerName} Wins!`;
+      if (miniWinner) miniWinner.textContent = `${winnerName} Wins!`;
+
+      if (winningDetails) {
+        if (lineDesc) lineDesc.textContent = `${winningDetails.lineLabel || 'Winning Line'}:`;
+        if (formula) formula.textContent = winningDetails.formula || 'Net Line Sum = 16';
+        if (miniFormula) miniFormula.textContent = winningDetails.formula || 'Sum: 16';
+      } else {
+        if (lineDesc) lineDesc.textContent = 'Winning Line:';
+        if (formula) formula.textContent = 'Net Line Sum = 16';
+        if (miniFormula) miniFormula.textContent = 'Sum: 16';
+      }
+
+      if (statusPillText) {
+        statusPillText.textContent = `🏆 ${winnerName} Wins!`;
+      }
+      if (statusDot) {
+        statusDot.classList.add('active-turn');
+      }
+
+      if (banner) {
+        banner.classList.remove('none');
+        if (!banner.classList.contains('is-minimized')) {
+          if (content) content.classList.remove('none');
+          if (minimized) minimized.classList.add('none');
+        } else {
+          if (content) content.classList.add('none');
+          if (minimized) minimized.classList.remove('none');
+        }
+      }
+    }
+
+    function hideVictoryUI() {
+      const banner = document.getElementById('victoryBanner');
+      if (banner) {
+        banner.classList.add('none');
+        banner.classList.remove('is-minimized');
+        const content = document.getElementById('victoryContent');
+        const minimized = document.getElementById('victoryMinimized');
+        if (content) content.classList.remove('none');
+        if (minimized) minimized.classList.add('none');
+      }
+      document.querySelectorAll('.cell.winning-cell').forEach(c => c.classList.remove('winning-cell'));
     }
 
     function updateCellStone(cellIndex, colorType, value) {
@@ -334,6 +451,13 @@
       cardP1.classList.remove('active-turn');
       cardP2.classList.remove('active-turn');
       statusDot.classList.remove('active-turn');
+
+      // Check if match already has a winner
+      if (board_state.winner) {
+        actionTray.classList.add('none');
+        showVictoryUI(board_state.winner, board_state.winningCells, board_state.winningDetails);
+        return;
+      }
 
       if (!board_state.has_start) {
         statusPillText.textContent = 'Waiting for Players...';
@@ -502,23 +626,7 @@
 
       // Check winner
       if (info.winner) {
-        listenersEnabled = false;
-        // Highlight winning line if provided
-        if (info.winningCells && info.winningCells.length > 0) {
-          info.winningCells.forEach(idx => {
-            const c = document.querySelector(`.cell[data-id="${idx}"]`);
-            if (c) c.classList.add('winning-cell');
-          });
-        }
-
-        const isWhite = (info.winner === 'white');
-        const winnerName = isWhite ? 'Player 1 (White)' : 'Player 2 (Black)';
-        document.getElementById('victoryTitle').textContent = `🏆 ${winnerName} Wins!`;
-        document.getElementById('victoryDesc').textContent = `Achieved a net line sum of 16!`;
-        
-        setTimeout(() => {
-          document.getElementById('victoryModal').classList.remove('none');
-        }, 600);
+        showVictoryUI(info.winner, info.winningCells, info.winningDetails);
       }
 
       refreshUI();
@@ -530,7 +638,7 @@
       listenersEnabled = true;
       selectedCellId = null;
 
-      document.getElementById('victoryModal').classList.add('none');
+      hideVictoryUI();
       document.getElementById('countdownModal').classList.add('none');
 
       initBoard();
@@ -554,8 +662,21 @@
         socket.emit('join_player_two', myUserId);
       });
 
+      // Inspect board toggle
+      $('#btnToggleInspect').on('click', function () {
+        $('#victoryContent').addClass('none');
+        $('#victoryMinimized').removeClass('none');
+        $('#victoryBanner').addClass('is-minimized');
+      });
+
+      $('#btnExpandBanner').on('click', function () {
+        $('#victoryMinimized').addClass('none');
+        $('#victoryContent').removeClass('none');
+        $('#victoryBanner').removeClass('is-minimized');
+      });
+
       // Play Again & Reset
-      $('#btnPlayAgain, #btnRestart').on('click', function () {
+      $('#btnPlayAgain, #btnPlayAgainMini, #btnRestart').on('click', function () {
         socket.emit('restart', null);
       });
 

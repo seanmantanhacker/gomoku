@@ -24,7 +24,10 @@ information =  {
   has_start : false,
   whos_turn : null,
   player1_stone : [5,5,5,5,5],
-  player2_stone : [5,5,5,5,5]
+  player2_stone : [5,5,5,5,5],
+  winner : null,
+  winningCells : [],
+  winningDetails : null
 }
 
 // Routes
@@ -140,7 +143,10 @@ io.on('connection', (socket) => {
       has_start: false,
       whos_turn: null,
       player1_stone: [5, 5, 5, 5, 5],
-      player2_stone: [5, 5, 5, 5, 5]
+      player2_stone: [5, 5, 5, 5, 5],
+      winner: null,
+      winningCells: [],
+      winningDetails: null
     };
     global_state_player = {
       player1: null,
@@ -193,12 +199,24 @@ io.on('connection', (socket) => {
     if (score.winner == 1) {
       all_data.winner = "white";
       all_data.winningCells = score.winningCells || [];
+      all_data.winningDetails = score.winningDetails || null;
+      information.winner = "white";
+      information.winningCells = score.winningCells || [];
+      information.winningDetails = score.winningDetails || null;
     } else if (score.winner == 2) {
       all_data.winner = "black";
       all_data.winningCells = score.winningCells || [];
+      all_data.winningDetails = score.winningDetails || null;
+      information.winner = "black";
+      information.winningCells = score.winningCells || [];
+      information.winningDetails = score.winningDetails || null;
     } else {
       all_data.winner = null;
       all_data.winningCells = [];
+      all_data.winningDetails = null;
+      information.winner = null;
+      information.winningCells = [];
+      information.winningDetails = null;
     }
     io.emit("update_move", all_data);
     broadcastRoomStatus();
@@ -225,7 +243,7 @@ function parseCell(cell) {
 function scoreLine(line) {
   let white = 0;
   let black = 0;
-  let someone_win = 0
+  let someone_win = 0;
   for (const cell of line) {
     const parsed = parseCell(cell);
     if (!parsed) continue;
@@ -239,12 +257,53 @@ function scoreLine(line) {
     }
   }
   if (white == 16){
-    someone_win = 1
+    someone_win = 1;
   } else if (black == 16){
-    someone_win = 2
+    someone_win = 2;
   }
   return { white, black , someone_win };
 }
+
+function buildWinningDetails(winnerNum, indices, boardFlat, lineLabel) {
+  const winnerColor = winnerNum === 1 ? 'white' : 'black';
+  const winningCells = [];
+  const winningStones = [];
+
+  for (let i = 0; i < indices.length; i++) {
+    const idx = indices[i];
+    const val = boardFlat[idx];
+    if (val && val !== 0) {
+      winningCells.push(idx);
+      const parsed = parseCell(val);
+      if (parsed) winningStones.push(parsed);
+    }
+  }
+
+  // Format human-friendly mathematical formula showing how stones sum to 16
+  const parts = [];
+  winningStones.forEach((st, i) => {
+    const isWinnerColor = (st.color === winnerColor);
+    const sym = st.color === 'white' ? '⚪' : '⚫';
+    if (i === 0) {
+      parts.push(`${isWinnerColor ? '' : '-'}${sym}${st.value}`);
+    } else {
+      parts.push(`${isWinnerColor ? '+' : '-'} ${sym}${st.value}`);
+    }
+  });
+
+  const formula = parts.length > 0 ? `${parts.join(' ')} = 16` : 'Sum = 16';
+
+  return {
+    winningCells,
+    winningDetails: {
+      lineLabel,
+      formula,
+      winnerColor,
+      stonesCount: winningCells.length
+    }
+  };
+}
+
 function calculateScores(boardFlat) {
   const result = {
     rows: [],
@@ -252,7 +311,8 @@ function calculateScores(boardFlat) {
     diagonalsRight: [],
     diagonalsLeft: [],
     winner: 0,
-    winningCells: []
+    winningCells: [],
+    winningDetails: null
   };
 
   // Helper to get value from 1D index
@@ -269,7 +329,9 @@ function calculateScores(boardFlat) {
     const helper = scoreLine(row);
     if (helper.someone_win == 1 || helper.someone_win == 2) {
       result.winner = helper.someone_win;
-      result.winningCells = indices;
+      const details = buildWinningDetails(helper.someone_win, indices, boardFlat, `Row ${r + 1}`);
+      result.winningCells = details.winningCells;
+      result.winningDetails = details.winningDetails;
     }
     result.rows.push(helper);
   }
@@ -285,7 +347,9 @@ function calculateScores(boardFlat) {
     const helper = scoreLine(col);
     if (helper.someone_win == 1 || helper.someone_win == 2) {
       result.winner = helper.someone_win;
-      result.winningCells = indices;
+      const details = buildWinningDetails(helper.someone_win, indices, boardFlat, `Column ${c + 1}`);
+      result.winningCells = details.winningCells;
+      result.winningDetails = details.winningDetails;
     }
     result.cols.push(helper);
   }
@@ -304,7 +368,9 @@ function calculateScores(boardFlat) {
     const helper = scoreLine(diag);
     if (helper.someone_win == 1 || helper.someone_win == 2) {
       result.winner = helper.someone_win;
-      result.winningCells = indices;
+      const details = buildWinningDetails(helper.someone_win, indices, boardFlat, 'Diagonal ↘');
+      result.winningCells = details.winningCells;
+      result.winningDetails = details.winningDetails;
     }
     result.diagonalsRight.push(helper);
   }
@@ -323,7 +389,9 @@ function calculateScores(boardFlat) {
     const helper = scoreLine(diag);
     if (helper.someone_win == 1 || helper.someone_win == 2) {
       result.winner = helper.someone_win;
-      result.winningCells = indices;
+      const details = buildWinningDetails(helper.someone_win, indices, boardFlat, 'Diagonal ↙');
+      result.winningCells = details.winningCells;
+      result.winningDetails = details.winningDetails;
     }
     result.diagonalsLeft.push(helper);
   }

@@ -417,15 +417,22 @@ body {
     inset 0 2px 2px rgba(255, 255, 255, 0.25);
 }
 
+.cell.winning-cell {
+  background-color: rgba(250, 204, 21, 0.28) !important;
+  box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.6) !important;
+  border-color: rgba(234, 179, 8, 0.7) !important;
+}
+
 .winning-cell .stone {
-  animation: winningPulse 1.2s infinite alternate !important;
-  box-shadow: 0 0 16px #facc15, 0 0 24px #eab308 !important;
-  border: 2px solid #fef08a !important;
+  animation: winningPulse 1.1s infinite alternate cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 0 20px #facc15, 0 0 35px #eab308, inset 0 0 8px #ffffff !important;
+  border: 2.5px solid #fffbeb !important;
+  z-index: 10;
 }
 
 @keyframes winningPulse {
   0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.15); filter: brightness(1.25); }
+  100% { transform: scale(1.18); filter: brightness(1.3); }
 }
 
 /* Bottom Player Hand / Tray */
@@ -541,6 +548,248 @@ body {
 
 .btn-place:hover {
   background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+/* Non-blocking Victory Celebration Banner */
+.victory-banner {
+  width: 100%;
+  max-width: 750px;
+  background: rgba(18, 26, 42, 0.94);
+  backdrop-filter: blur(14px);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 14px 20px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 25px var(--gold-glow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUpFade 0.35s ease-out;
+  position: relative;
+  z-index: 50;
+}
+
+.victory-banner.is-minimized {
+  padding: 8px 16px;
+  border-radius: 999px;
+  max-width: 600px;
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.victory-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.victory-main-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.victory-trophy-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 140, 0, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+  animation: trophyPop 2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes trophyPop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08) rotate(3deg); }
+}
+
+.victory-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.victory-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.victory-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.victory-target-badge {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.victory-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.victory-line-desc {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.victory-formula {
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 13px;
+}
+
+.victory-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-inspect {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--accent-cyan);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-inspect:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-play-again {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #0f141c;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+.btn-play-again:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.6);
+}
+
+/* Minimized Mode Styling */
+.victory-minimized {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.mini-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mini-trophy {
+  font-size: 16px;
+}
+
+.mini-winner {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.mini-formula {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-inspect-mini {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-inspect-mini:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.btn-play-again-mini {
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #0f141c;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-play-again-mini:hover {
+  transform: translateY(-1px);
 }
 
 /* Modals */
@@ -687,5 +936,24 @@ body {
   }
   .action-tray {
     padding: 8px 10px;
+  }
+  .victory-banner {
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+  .victory-title {
+    font-size: 15px;
+  }
+  .victory-trophy-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+  .victory-formula {
+    font-size: 11px;
+  }
+  .btn-inspect, .btn-play-again {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 }
